@@ -8,6 +8,7 @@ import os
 import sys
 import runpy
 import logging
+import urllib2
 import pkg_resources
 
 
