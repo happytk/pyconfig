@@ -4,6 +4,7 @@ Pyconfig
 
 """
 from __future__ import print_function, unicode_literals
+import os
 import sys
 import runpy
 import logging
@@ -29,9 +30,26 @@ class Namespace(object):
         pyconfig.example.setting = True
 
     """
-    def __init__(self):
+    def __init__(self, src_dict={}, src_pyfile=None, src_pyurl=None):
         # Using a regular assignment here breaks due to __setattr__ overriding
-        object.__setattr__(self, '_config', {})
+        d = {}
+        d.update(src_dict)
+        if src_pyfile:
+            abspath = os.path.abspath(os.path.expanduser(src_pyfile))
+            dict_from_py = {}
+            with open(abspath , 'rb') as f:
+                content = f.read()
+            exec(compile(content, abspath, 'exec'), globals(), dict_from_py)
+            d.update(dict_from_py)
+
+        if src_pyurl:
+            dict_from_url = {}
+            with urllib2.urlopen(src_pyurl) as f:
+                content = f.read()
+            exec(compile(content, abspath, 'exec'), globals(), dict_from_url)
+            d.update(dict_from_url)
+
+        object.__setattr__(self, '_config', d)
 
     def __setattr__(self, name, value):
         # Allow nested property access

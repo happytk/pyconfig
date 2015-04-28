@@ -67,6 +67,11 @@ def test_allow_default():
         'default_value')
 
 
+def test_namespace_with_dict():
+    ns = pyconfig.Namespace({'test':'tested', 'nested.test': 'tested'})
+    eq_(dict(ns._get_config('ns')), {'ns.test':'tested', 'ns.nested.test': 'tested'})
+
+
 @raises(LookupError)
 def test_get_no_default():
     pyconfig.get('get_no_default1', allow_default=False)
@@ -184,4 +189,9 @@ def test_get_default_with_various_values():
 
 def test_localconfig_py_actually_works():
     eq_(pyconfig.get('conf.local', False), True)
+
+def test_localconfig_py_actually_works():
+    eq_(pyconfig.get('conf.local', False), True)
+    eq_(pyconfig.get('conf.inp1', False), True)
+    eq_(pyconfig.get('conf.inp2', False), True)
 
