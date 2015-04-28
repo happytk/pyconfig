@@ -9,6 +9,7 @@ import sys
 import runpy
 import logging
 import urllib2
+import inspect
 import pkg_resources
 
 
@@ -17,6 +18,27 @@ __version__ = '2.2.1'
 
 log = logging.getLogger(__name__)
 
+
+def import_module(modname):
+
+    if '.' in modname:
+        name = modname
+        parts = modname.split('.')
+        fromlist = parts[-1:]
+
+        try:
+            conf_mod = __import__(name, fromlist=fromlist)
+        except AttributeError:
+            raise ImportError('No module named %s' % modname)
+    else:
+        conf_mod = __import__(modname)
+
+    d = {}
+    for key in dir(conf_mod):
+        if key.startswith('_'): continue
+        if inspect.ismodule(key): continue
+        d[key] = getattr(conf_mod, key)
+    return d
 
 class Namespace(object):
     """
@@ -31,7 +53,7 @@ class Namespace(object):
         pyconfig.example.setting = True
 
     """
-    def __init__(self, src_dict={}, src_pyfile=None, src_pyurl=None):
+    def __init__(self, src_dict={}, src_pyfile=None, src_pyurl=None, src_module=None):
         # Using a regular assignment here breaks due to __setattr__ overriding
         d = {}
         d.update(src_dict)
@@ -49,6 +71,11 @@ class Namespace(object):
                 content = f.read()
             exec(compile(content, abspath, 'exec'), globals(), dict_from_url)
             d.update(dict_from_url)
+
+        if src_module:
+            module_dict = import_module(src_module)
+            d.update(module_dict)
+
 
         object.__setattr__(self, '_config', d)
 
