@@ -53,29 +53,31 @@ class Namespace(object):
         pyconfig.example.setting = True
 
     """
-    def __init__(self, src_dict={}, src_pyfile=None, src_pyurl=None, src_module=None):
+    def __init__(self, src):
         # Using a regular assignment here breaks due to __setattr__ overriding
         d = {}
-        d.update(src_dict)
-        if src_pyfile:
-            abspath = os.path.abspath(os.path.expanduser(src_pyfile))
-            dict_from_py = {}
-            with open(abspath , 'rb') as f:
-                content = f.read()
-            exec(compile(content, abspath, 'exec'), globals(), dict_from_py)
-            d.update(dict_from_py)
-
-        if src_pyurl:
-            dict_from_url = {}
-            with urllib2.urlopen(src_pyurl) as f:
-                content = f.read()
-            exec(compile(content, abspath, 'exec'), globals(), dict_from_url)
-            d.update(dict_from_url)
-
-        if src_module:
-            module_dict = import_module(src_module)
-            d.update(module_dict)
-
+        if isinstance(src, dict):
+            d.update(src_dict)
+        elif isinstance(src, str) or isinstance(src, unicode):
+            if src.startswith('http://'):
+                dict_from_url = {}
+                with urllib2.urlopen(src) as f:
+                    content = f.read()
+                exec(compile(content, abspath, 'exec'), globals(), dict_from_url)
+                d.update(dict_from_url)
+            elif src.endswith('.py'):
+                dict_from_py = {}
+                abspath = os.path.abspath(os.path.expanduser(src))
+                dict_from_py = {}
+                with open(abspath , 'rb') as f:
+                    content = f.read()
+                exec(compile(content, abspath, 'exec'), globals(), dict_from_py)
+                d.update(dict_from_py)
+            else:
+                dict_from_mod = import_module(src)
+                d.update(module_dict)
+        else:
+            raise Exception('Unknown src type.')
 
         object.__setattr__(self, '_config', d)
 
