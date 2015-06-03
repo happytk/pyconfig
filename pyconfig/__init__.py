@@ -53,17 +53,19 @@ class Namespace(object):
         pyconfig.example.setting = True
 
     """
-    def __init__(self, src):
+    def __init__(self, src=None):
         # Using a regular assignment here breaks due to __setattr__ overriding
         d = {}
-        if isinstance(src, dict):
-            d.update(src_dict)
+        if src is None: pass
+        elif isinstance(src, dict):
+            d.update(src)
         elif isinstance(src, str) or isinstance(src, unicode):
             if src.startswith('http://'):
                 dict_from_url = {}
-                with urllib2.urlopen(src) as f:
-                    content = f.read()
-                exec(compile(content, abspath, 'exec'), globals(), dict_from_url)
+                f = urllib2.urlopen(src)
+                content = f.read()
+                f.close()
+                exec(compile(content, '<string>', 'exec'), globals(), dict_from_url)
                 d.update(dict_from_url)
             elif src.endswith('.py'):
                 dict_from_py = {}
